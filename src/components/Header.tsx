@@ -43,6 +43,7 @@ interface HeaderProps {
   onTestAlert?: () => void;
   isMuted?: boolean;
   onToggleMute?: () => void;
+  onReplayIntro?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -64,6 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
   onTestAlert,
   isMuted = false,
   onToggleMute,
+  onReplayIntro,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
@@ -179,13 +181,24 @@ export const Header: React.FC<HeaderProps> = ({
 
       <div className="max-w-[1700px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Brand Logo & Name */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center shadow-md shadow-blue-500/20 text-white">
-            <ShieldAlert className="w-5 h-5 text-white" />
+        <div
+          onClick={onReplayIntro}
+          className={`flex items-center gap-3 ${onReplayIntro ? 'cursor-pointer group select-none' : ''}`}
+          title={onReplayIntro ? 'Click to replay HeatShield intro animation' : undefined}
+        >
+          <div className="relative w-9 h-9 rounded-xl overflow-hidden bg-slate-900 border border-cyan-500/30 flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:border-cyan-400 group-hover:shadow-cyan-500/30 transition-all shrink-0">
+            <img
+              src="/logo.png"
+              alt="HeatShield Logo"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/favicon.svg';
+              }}
+            />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5 dark:text-white light:text-slate-900">
+              <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5 dark:text-white light:text-slate-900 group-hover:text-cyan-300 transition-colors">
                 HeatShield
               </span>
               <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">

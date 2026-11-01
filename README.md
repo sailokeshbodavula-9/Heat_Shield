@@ -1,137 +1,196 @@
-# 🛡️ HeatShield: Autonomous Urban Heatwave Response & Hyperlocal Cooling Platform
+<div align="center">
 
-> **AI-orchestrated municipal heat action planner and citizen early warning system for Indian metropolitan cities.**
+<img src="./public/logo.png" alt="HeatShield Logo" width="180" height="180" style="border-radius: 28px; box-shadow: 0 10px 30px rgba(6, 182, 212, 0.3);" />
 
-HeatShield bridges the gap between planetary earth observation data (Copernicus Sentinel-2, Landsat, Google Earth Engine), real-time meteorological models (Open-Meteo), and urban morphology to protect vulnerable communities from extreme heatwaves. It combines an autonomous, verified AI agent with hyperlocal citizen safety tools, spatial facility optimizers, and power grid stress forecasting.
+# 🛡️ HeatShield
+### Autonomous Urban Heatwave Intelligence & Hyperlocal Cooling Platform
 
----
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![React](https://img.shields.io/badge/React-19.0-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Leaflet](https://img.shields.io/badge/Leaflet-1.9-199900?logo=leaflet&logoColor=white)](https://leafletjs.com/)
+[![Open-Meteo](https://img.shields.io/badge/Open--Meteo-High--Res_API-FF6B6B)](https://open-meteo.com/)
+[![Copernicus Sentinel](https://img.shields.io/badge/Copernicus-Sentinel--2_10m-005B94)](https://dataspace.copernicus.eu/)
 
-## 🌟 Key Features
-
-* **Hyperlocal GPS "Current Location"**: Instantly detects your exact neighborhood and coordinates, reverse geocodes to your Indian administrative sector, and surfaces immediate heat metrics and the nearest cooling shelter.
-* **Automatic Severe Condition Notification System**: Automatically triggers multi-channel emergency alerts (Web Audio siren chime, HTML5 desktop push notifications, and high-visibility alert banner) whenever your area breaches critical heat thresholds ($\ge 75/100$ or under El Niño surges).
-* **Autonomous AI Municipal Action Planner**: Generates deterministic, hallucination-free field action plans with inspectable reasoning traces and a 3-tier validation pipeline ($V_1$ schema, $V_2$ numeric grounding, $V_3$ safety enforcement).
-* **Optimal Public Cooling Center Placement**: Greedy maximal coverage algorithm solving for $k$ optimal cooling centers within straight-line walking radii ($1.5\text{ km}$) to protect high-risk populations.
-* **Power Grid Demand & Thermal Stress Forecasting**: Ridge-regression cooling demand model ($\text{MW}/^\circ\text{C}$) calculating peak electrical risk windows ($[13:00, 17:00)$) and optimal load-shifting periods ($[18:00, 22:00)$).
-* **El Niño Climate Teleconnection (+2 °C)**: Live NOAA CPC Niño-3.4 Pacific SST integration allowing one-click simulation of regional monsoon heatwave surges.
-* **Earth Observation Telemetry**: High-resolution Copernicus Sentinel-2 10m NDVI canopy maps, Google Earth Engine thermal LST, and OpenStreetMap urban building footprints.
-
----
-
-## 📖 How to Use the Application
-
-### 1. Monitor Your Neighborhood with "Current Location"
-1. In the top navigation bar, click the **Current Location** button (or click **Locate Me** in the map controls toolbar).
-2. Allow browser location permissions when prompted.
-3. HeatShield will:
-   * Identify your exact Indian locality (e.g. *Gachibowli, Hyderabad* or *Koramangala, Bengaluru*).
-   * Automatically switch the city if you are located in a different urban center.
-   * Drop a pulsating blue radar marker on the map at your coordinates.
-   * Open the **Current Location Details** modal showing your sector's Heat Risk Score, feels-like peak temperature, nearest cooling facility distance (in meters), danger window, and actionable safety guidance.
+*An AI-orchestrated municipal heat action planner and citizen early warning system for Indian metropolitan cities.*
 
 ---
 
-### 2. Receiving Severe Heat Emergency Notifications
-* **Automatic Alerts**: If your area enters **Severe** condition (risk score $\ge 75/100$ or under an extreme temperature surge):
-  * A dual-tone synthesized **acoustic chime** will sound ($587\text{ Hz} \to 880\text{ Hz}$).
-  * An **HTML5 desktop notification** will be dispatched even if the tab is in the background.
-  * A high-visibility **Critical Severe Heat Alert** banner will anchor to the bottom of your screen with direct buttons to **Locate Nearest Shelter** and **View Safety Plan**.
-* **Managing Alerts**:
-  * Click the **Bell Icon** in the top header to view the Alerts Center.
-  * Toggle **Browser Notifications** (Enable / Disable).
-  * Toggle **Alert Chime Sound** (Sound On / Muted).
-  * Click **Test Severe Alert Notification** to test the siren, notification, and banner.
+</div>
+
+## 📌 Executive Overview
+
+During extreme summer heatwaves in India, surface and air temperatures routinely surpass **44°C to 48°C**, triggering deadly heat stress, water shortages, and electrical grid peak brownouts. Informal settlements, outdoor laborers, and densely built urban sectors bear the brunt of the **Urban Heat Island (UHI)** effect.
+
+**HeatShield** is an autonomous decision-support system built for city authorities, disaster management agencies (NDMA/SDMA), and municipal commissioners. It combines high-resolution planetary earth observation, real-time meteorological models, and spatial facility optimization to tell authorities **where to act first** and gives citizens **instant, verified shelter and survival guidance**.
 
 ---
 
-### 3. Exploring City Wards & Sectors
-* **City Search**: Use the search bar in the top navigation bar to select or search across 30+ major Indian cities (Bengaluru, Hyderabad, Mumbai, Delhi, Chennai, Kolkata, Ahmedabad, Jaipur, Pune, etc.).
-* **Interactive Choropleth Map**:
-  * Click on any ward or grid cell on the map to open the **Ward Breakdown Drawer**.
-  * View the 7-day feels-like temperature sparkline, Copernicus Sentinel-2 canopy coverage, Google Earth Engine thermal LST, and building density.
-* **Map Layer Toggles** (Top-Right of Map):
-  * **Color Modes**: Switch between **Risk** ($H \times E \times V$), **Heat** (Apparent Temperature), **Green** (Tree Canopy / NDVI), and **Density** (Building Footprint).
-  * **OSM Sites**: Toggle verified candidate public cooling sites.
-  * **Centres**: Toggle activated municipal cooling centers with walking radius overlays.
-  * **Basemaps**: Switch between Dark Canvas and OpenStreetMap.
+## 🌟 Key Capabilities
+
+### 1. 📍 Hyperlocal "Current Location" Sector Profiling
+* **Instant GPS Resolution**: Uses browser geolocation and reverse geocoding to identify your exact municipal ward or grid cell (e.g., *Indiranagar, Bengaluru* or *Gachibowli, Hyderabad*).
+* **Automated Metropolitan Switching**: Seamlessly switches city boundaries and telemetry feeds if your physical device is located in a different urban center.
+* **Proximity Radar Marker**: Drops a pulsating blue radar pin on the Leaflet map with GPS accuracy rings and walking distance to the nearest public cooling shelter.
+
+### 2. 🚨 Automatic Severe Condition Emergency Alerting
+* **Automated Multi-Channel Broadcast**: Fires immediate alerts when an area breaches critical thresholds ($\ge 75/100$ risk or under severe El Niño surges).
+* **Dual-Tone Acoustic Siren**: Synthesizes an emergency acoustic chime ($587\text{ Hz} \to 880\text{ Hz}$) via the Web Audio API without external audio file dependencies.
+* **HTML5 Desktop Push Notifications**: Alerts workers and residents even when the application tab is running in the background.
+* **Persistent Emergency Banner**: High-visibility lower banner with 1-click **Locate Nearest Shelter** and **Open Safety Directive** actions.
+* **Notification Control Center**: Accessible via the header bell icon with sound mute toggles and simulated alert test runners.
+
+### 3. 🤖 Autonomous AI Municipal Action Planner
+* **Deterministic Tool Calling**: Executes inspectable reasoning loops without hallucinations:
+  1. `get_weather_forecast(days=7)` — Analyzes apparent feels-like peak temperatures and sustained heatwave streaks.
+  2. `compute_ward_risks(weights)` — Computes composite Hazard $\times$ Exposure $\times$ Vulnerability matrices.
+  3. `optimize_cooling_centers(k, radius_km)` — Solves the greedy maximal coverage facility location problem.
+  4. `model_grid_demand()` — Forecasts electricity peak surge and specifies thermal load-shifting windows.
+* **3-Tier Verification Gate**:
+  * **$V_1$ Schema Validation**: Structural completeness of JSON response payload.
+  * **$V_2$ Numeric Grounding**: Strict check ensuring temperature, MW values, and percentages match raw sensor telemetry.
+  * **$V_3$ Safety & Equity**: Verifies zero-cost access, water availability, and priority coverage for high-risk wards.
+* **Multilingual Advisories**: Formulates localized operational field directives in English, Hindi, and Kannada.
+
+### 4. 🏢 Optimal Public Cooling Center Placement
+* **Maximal Coverage Optimizer**: Solves for $k$ optimal public cooling centers within straight-line walking radii ($1.5\text{ km}$) using verified OpenStreetMap civic facilities (schools, community halls, transit hubs, clinics).
+* **Spatial Interactive Overlays**: Visualizes service coverage circles, pulsing active shelters, and highlights uncovered vulnerable zones in high-contrast red.
+
+### 5. ⚡ Power Grid Demand & Thermal Stress Forecasting
+* **Cooling Demand Sensitivity**: Ridge-regression model ($\text{MW}/^\circ\text{C}$) calculating peak electrical risk windows ($[13:00, 17:00)$).
+* **Load Shifting Strategy**: Specifies optimal non-essential water pumping and appliance shift windows ($[18:00, 22:00)$) to prevent localized transformer fires and rolling blackouts.
+
+### 6. 🌊 Live El Niño Climate Teleconnection (+2 °C)
+* **NOAA CPC Niño-3.4 Index**: Real-time integration of equatorial Pacific sea surface temperature anomalies.
+* **One-Click Stress Simulation**: Toggle "+2.0 °C El Niño Stress Mode" to simulate regional heat surge multipliers across northern plains, coastal peninsular, and central plateau zones.
+
+### 7. 🛰️ Planetary Earth Observation Telemetry
+* **Copernicus Sentinel-2 (10m)**: Real-time multispectral vegetation reflectance and ESA WorldCover tree canopy coverage.
+* **Google Earth Engine & Landsat-9 TIRS**: Thermal infrared radiometric Land Surface Temperature (LST) and emissivity profiling.
+* **OpenStreetMap Urban Morphology**: Building density count per $\text{km}^2$ and impervious surface heat trapping.
 
 ---
 
-### 4. Generating an Autonomous Municipal Heat Action Plan
-1. In the hero strip at the top, click **Run Autonomous Planner** (or navigate to the **Action Plan** tab).
-2. The AI Agent executes inspectable tool-calling steps:
-   * Evaluates 7-day weather forecasts and computes sector risk matrices.
-   * Optimizes the placement of $k$ cooling facilities for maximum coverage.
-   * Models power grid stress windows and non-essential load shifting.
-   * Verifies data grounding ($V_1$, $V_2$, $V_3$ gates).
-   * Generates localized emergency advisories in English, Hindi, and Kannada.
-3. Review the generated plan, activated facilities, and high-risk ward priorities.
+## 🎨 Identity, Logo & Opening Animation
+
+* **Emblem**: Modern geometric shield deflecting fiery amber thermal waves with a radiant cyan-blue cooling barrier.
+* **Favicon**: Crisp vector SVG (`/public/favicon.svg`) with fallback PNG (`/public/logo.png`) that renders razor-sharp across all browser tabs, bookmarks, and mobile home screens.
+* **Opening Splash Animation**:
+  * An ambient intro sequence with glowing shield pulse and expanding protective wave ripples.
+  * Step-by-step telemetry progress indicator displaying sensor and satellite calibration.
+  * Instant "Skip" button and header logo replay trigger.
 
 ---
 
-### 5. Simulating Climate Stress & El Niño (+2 °C)
-1. In the top navigation header, click the **El Niño (+2 °C)** toggle.
-2. The platform instantly recalculates the entire city's hazard score using state-specific regional teleconnection multipliers based on the NOAA CPC Niño-3.4 index.
-3. Observe how moderate and high-risk wards escalate into the **Severe** category and see how cooling center coverage dynamically shifts.
+## 🏛️ Technical Architecture
 
----
-
-### 6. Reviewing Power Grid Demand & Data Sources
-* **Demand Tab**: View hourly electricity load forecasts, cooling demand sensitivity ($\text{MW}/^\circ\text{C}$), critical thermal stress hours, and recommended load-shifting windows.
-* **Risk Ranking Tab**: Inspect the tabular ranking of all wards sorted by composite vulnerability and priority.
-* **Sources Tab**: Check live health status, API latency, and metadata for all 7 underlying data feeds.
-* **Settings Modal** (Gear Icon): Customize planning parameters like number of centers ($k$), walking radius ($km$), hazard temperature thresholds, and weights for Hazard, Exposure, and Vulnerability.
-
----
-
-## 🏗️ Technical Architecture & Data Feeds
-
-| Layer | Source / Standard | Purpose |
-| :--- | :--- | :--- |
-| **Meteorological Forecasts** | Open-Meteo High-Resolution API | Hourly apparent temperature, relative humidity, wind speed |
-| **Vegetation & Canopy** | Copernicus Sentinel-2 MSI (10m) | High-res NDVI (B4/B8) vegetation health & canopy coverage |
-| **Surface Temperature** | NASA/USGS Landsat-9 & Google Earth Engine | Thermal Infrared Sensor (TIRS) Land Surface Temperature (LST) |
-| **Cooling Infrastructure** | OpenStreetMap Overpass API | Verified public halls, schools, clinics, and transit shelters |
-| **Urban Morphology** | OpenStreetMap Building Polygons | Building footprint density and heat trapping surface area |
-| **Climate Oscillation** | NOAA Climate Prediction Center (CPC) | Niño-3.4 SST index and regional Indian teleconnections |
-| **Electrical Grid Load** | OGD India (data.gov.in) & POSOCO/CEA | State load despatch baseload and summer elasticity coefficients |
-
----
-
-## 💻 Local Development & Installation
-
-### Prerequisites
-* Node.js 18+ or Node.js 20+
-* npm or pnpm
-
-### Quick Start
-```bash
-# 1. Clone repository
-git clone https://github.com/your-username/heatshield.git
-cd heatshield
-
-# 2. Install dependencies
-npm install
-
-# 3. Start development server
-npm run dev
+```
+                                  ┌───────────────────────────────────────────────┐
+                                  │           Planetary Data Feeds                │
+                                  ├───────────────────────┬───────────────────────┤
+                                  │ Open-Meteo High-Res   │ Copernicus Sentinel-2 │
+                                  │ NOAA Niño-3.4 SST     │ Landsat-9 TIRS (GEE)  │
+                                  │ Overpass OSM Sites    │ Grid-India / CEA Data │
+                                  └───────────┬───────────┴───────────┬───────────┘
+                                              │                       │
+                                              ▼                       ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   HeatShield Core Engine                                │
+├──────────────────────────┬─────────────────────────────┬───────────────────────────────┤
+│    Risk Model (H×E×V)    │  Cooling Center Optimizer   │      Grid Demand Model        │
+│   Normalized Composite   │  Greedy Maximal Coverage    │      Ridge Elasticity         │
+│   Ward Heat Vulnerability│  k facilities, 1.5km radius │      Thermal Stress Window    │
+└──────────────────────────┴──────────────┬──────────────┴───────────────────────────────┘
+                                          │
+                                          ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                        Autonomous AI Agent & Verifier Pipeline                         │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│  Tools: get_weather, compute_risks, optimize_centers, forecast_demand, make_plan       │
+│  Verification Gates: V1 Schema ──► V2 Numeric Grounding ──► V3 Safety Directives       │
+└─────────────────────────────────────────┬──────────────────────────────────────────────┘
+                                          │
+                                          ▼
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                  Interactive User UI                                   │
+├──────────────────────────┬─────────────────────────────┬───────────────────────────────┤
+│ Leaflet Choropleth Map   │ Hyperlocal GPS Location     │ Multi-Channel Alert Engine    │
+│ Dynamic Layer Toggles    │ City Autocomplete Search    │ Ward Breakdown Drawer         │
+└──────────────────────────┴─────────────────────────────┴───────────────────────────────┘
 ```
 
-Visit `http://localhost:3000` in your browser.
+---
 
-### Verification & Testing
+## 📊 Data Feeds & Standards
+
+| Source / Telemetry | Endpoint / Protocol | Refresh Frequency | Standards Compliance |
+| :--- | :--- | :--- | :--- |
+| **Open-Meteo High-Res** | `api.open-meteo.com/v1/forecast` | Hourly / 7-Day | WMO standards, apparent feels-like $T_{\text{max}}$ |
+| **NOAA CPC Niño-3.4** | `cpc.ncep.noaa.gov` | Weekly SST Anomaly | Global ENSO Advisory classification |
+| **Copernicus Sentinel-2** | Microsoft Planetary STAC | 5-day orbital pass | 10m Normalized Difference Vegetation Index (NDVI) |
+| **Google Earth Engine** | Landsat-9 TIRS Collection 2 | 8-day satellite pass | Radiative surface thermal emission (LST in °C) |
+| **OpenStreetMap Facilities**| Overpass API (`overpass-api.de`)| On-demand Bbox | Verified public schools, halls, clinics, shelters |
+| **National Grid Load** | Grid-India (POSOCO) / CEA | Seasonal baseload | State load despatch summer elasticity coefficients |
+| **IMD Mausam Standards** | Indian Meteorological Dept | Baseline classification | Heatwave: $\ge 40^\circ\text{C}$ plains, departure $\ge 4.5^\circ\text{C}$ |
+
+---
+
+## 🚀 Quick Start & Installation
+
+### Prerequisites
+* **Node.js**: v18.0.0 or higher (v20+ recommended)
+* **npm** or **pnpm**
+
+### 1. Clone & Install
 ```bash
-# Run TypeScript compilation & linting
+git clone https://github.com/your-username/heatshield.git
+cd heatshield
+npm install
+```
+
+### 2. Environment Variables
+Create a `.env` file from the example:
+```bash
+cp .env.example .env
+```
+*(Optional: Provide a `GEMINI_API_KEY` for server-side generative translation and dynamic advisory enhancements).*
+
+### 3. Launch Development Server
+```bash
+npm run dev
+```
+Open **`http://localhost:3000`** in your browser.
+
+---
+
+## 🧪 Testing & Verification
+
+HeatShield includes a mathematical test suite verifying all mathematical models:
+
+```bash
+# Run TypeScript compilation and static lint check
 npm run lint
 
-# Run automated mathematical acceptance test suite (T1 - T9)
+# Run the automated engine test suite (T1 - T9)
 npx tsx tests/engine.test.ts
 
-# Production build
+# Production optimized build
 npm run build
 ```
 
 ---
 
+## 🏙️ Supported Indian Metropolitan Catalog
+
+HeatShield includes native geographic boundaries, historical baselines, and peak centers for 30+ major Indian municipal corporations:
+
+* **Northern & Central**: Delhi NCT, Jaipur, Lucknow, Kanpur, Patna, Bhopal, Indore, Chandigarh, Varanasi.
+* **Western**: Mumbai, Pune, Ahmedabad, Surat, Nagpur, Vadodara, Nashik.
+* **Southern**: Bengaluru, Hyderabad, Chennai, Kochi, Thiruvananthapuram, Coimbatore, Visakhapatnam, Madurai.
+* **Eastern**: Kolkata, Bhubaneswar, Ranchi, Guwahati, Cuttack.
+
+---
+
 ## 📜 License
-Distributed under the Apache-2.0 License.
+Distributed under the **Apache-2.0 License**. See `LICENSE` for details.

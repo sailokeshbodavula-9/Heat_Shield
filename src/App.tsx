@@ -16,6 +16,7 @@ import { SourcesTab } from './components/SourcesTab.tsx';
 import { WardDrawer } from './components/WardDrawer.tsx';
 import { AgentTraceDrawer } from './components/AgentTraceDrawer.tsx';
 import { SettingsModal } from './components/SettingsModal.tsx';
+import { OpeningAnimation } from './components/OpeningAnimation.tsx';
 
 import type {
   AppSettings,
@@ -60,6 +61,9 @@ import { ToolContext } from './agent/tools.ts';
 type ActiveTab = 'plan' | 'recommendations' | 'ranking' | 'demand' | 'sources';
 
 export default function App() {
+  // Opening splash intro animation state
+  const [showOpeningAnimation, setShowOpeningAnimation] = useState<boolean>(true);
+
   // Theme state: dark is default (FIELD 7)
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
@@ -935,6 +939,7 @@ export default function App() {
         onTestAlert={handleTestSevereAlert}
         isMuted={isMuted}
         onToggleMute={() => setIsMuted(!isMuted)}
+        onReplayIntro={() => setShowOpeningAnimation(true)}
       />
 
       {/* Hero Strip with Run Planner, El Niño Climate Alert & 3 KPI Cards */}
@@ -1208,6 +1213,11 @@ export default function App() {
           isMuted={isMuted}
           onToggleMute={() => setIsMuted(!isMuted)}
         />
+      )}
+
+      {/* Opening Splash Intro Animation with HeatShield Logo */}
+      {showOpeningAnimation && (
+        <OpeningAnimation onComplete={() => setShowOpeningAnimation(false)} />
       )}
     </div>
   );
