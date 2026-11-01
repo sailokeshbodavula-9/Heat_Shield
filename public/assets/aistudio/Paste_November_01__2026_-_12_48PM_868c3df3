@@ -1,0 +1,412 @@
+HEATSHIELD SPEC: paste each FIELD into the matching box of the builder. Fields use bold labels only (no # headings), as the guide requires.
+
+FIELD 1a: Project name
+
+HeatShield (repo name: heatshield-planner; UI brand: "HeatShield")
+
+FIELD 1b: Short overview
+
+HeatShield is a browser-based decision-support web app (hackathon prototype, demo-grade rigour, no login) that tells city authorities in India where to act first during a heatwave. It has four layers: a data layer that pulls live public data (weather forecast, OpenStreetMap sites and buildings, optional satellite imagery, user-uploaded official power-demand history), a risk engine that scores every ward 0-100 with a transparent weighted formula, a demand model that forecasts city- or state-level electricity demand from temperature, and an AI planning agent that calls these as tools, runs a deterministic cooling-centre optimiser, verifies its own output, and produces a ranked action plan with advisories in English plus Kannada or Hindi. Primary journey: pick a city → Run Planner → read the ranked plan, map and agent trace. The app is a pure frontend that calls public APIs directly. It never sends alerts to anyone.
+
+FIELD 2: Problem statement
+
+Pain: El Niño years bring severe Indian summers. Heat alerts are issued per city or district, but heat exposure varies sharply inside a city: dense, treeless wards run several °C hotter than leafy ones a few km away. At the same time, demand for fans and ACs spikes together, which causes outages that remove the cooling people depend on. Authorities decide where to open cooling centres and whom to warn first with no ward-level view, and mostly react after people are harmed.
+
+Impact: The elderly, children and outdoor workers (delivery riders, construction workers, street vendors) bear the harm. Utilities cannot see the stress window coming. Cooling centres end up where they are convenient and not where risk is highest.
+
+Outcome: Within one click, an officer sees (a) wards ranked by heat risk with the factors behind each score, (b) the best k cooling-centre sites and the percentage of high-risk wards they cover, (c) the forecast demand peak and the time window to advise load shifting, (d) a verified, source-cited plan that can be exported.
+
+Non-goals:
+
+No sending of SMS, email, push or any alert.
+No ward-level electricity load (it is not publicly available).
+No grid control or outage prediction per feeder.
+No health records.
+No native mobile app.
+
+FIELD 3: Target users and user tasks
+
+Duty Officer (primary): municipal or disaster-management staff, non-technical.
+
+Select a city.
+Run the planner.
+Switch between Live forecast and the +2 °C stress test.
+Inspect a ward's risk breakdown.
+Adjust factor weights.
+Choose k and the walking radius.
+Read and export the action plan.
+Switch advisory language.
+
+Utility Planner: power-utility analyst, semi-technical.
+
+Upload a historical demand file.
+Map its columns.
+Check the backtest quality.
+Read the 7-day demand forecast and stress window.
+
+Evaluator / Demo Operator: judge or presenter.
+
+Watch the agent trace.
+Open the Sources tab to confirm every number is live or user-uploaded.
+See graceful failure when a source is down.
+
+Developer / Operator:
+
+Sets the Gemini key through the environment.
+Pastes the ward GeoJSON URL in Settings.
+
+Permissions: No authentication. Single-user demo; all roles use the same UI.
+
+FIELD 4: Core features
+
+Must-have
+
+F1 City selection: search a city by name through the geocoding service; result sets the city centre and bounding box. Default on first load: Bengaluru, resolved through the same search (not hardcoded coordinates).
+F2 Ward loading: load ward polygons from the GeoJSON URL set in Settings. If no URL is set, generate 1 km grid cells over the city bounding box, flagged is_grid_cell = true, and label them "grid cells, not wards" everywhere.
+F3 Forecast fetch: 7-day hourly forecast per ward sample point.
+F4 Candidate sites: fetch cooling-centre candidates from OpenStreetMap.
+F5 Building density and green cover: per ward, from OpenStreetMap.
+F6 Satellite layer (optional at runtime): latest low-cloud Sentinel-2 NDVI and Landsat land-surface temperature per ward, with scene date and cloud cover. The app must run fully if this layer fails.
+F7 Risk engine: weighted score 0-100 per ward, risk class, factor breakdown, live weight sliders.
+F8 Demand model: upload official history, column mapping, quadratic regression on temperature, backtest, 7-day forecast with interval, stress window.
+F9 Scenario toggle: live or stress_plus_2c, with persistent SIMULATED ribbon.
+F10 Cooling-centre optimiser: deterministic greedy maximal coverage, with a with/without plan comparison.
+F11 Planning agent: LLM function-calling loop over six allowlisted tools, capped at 12 steps.
+F12 Verifier: checks the plan against tool outputs and forces up to 2 corrections.
+F13 Template mode: if the LLM is unavailable, build the plan deterministically from the same tools.
+F14 Action plan view and export: three prioritised cards, language switch, copy, and PDF download using the browser print-to-PDF flow.
+F15 Agent trace: live-streamed step list with tool name, arguments, result summary, duration, status.
+F16 Sources tab: per-source status, last fetched time, record count, retry, official link.
+F17 Ward drawer and map layers: click a ward to see its breakdown and 7-day heat-index sparkline; layer toggles.
+F18 Settings: ward GeoJSON URL, k, radius, weights, hazard thresholds, language.
+
+Nice-to-have (only after all must-haves pass)
+
+N1: Skippable 4-step first-run tour with no sample data.
+N2: Dark/light theme toggle (dark is the default).
+N3: Optional vulnerability upload (population or age groups) in F7.
+N4: A small Python backend for satellite processing, only if browser raster reading proves unreliable.
+
+Out of scope: alert dispatch, authentication, database, user accounts, feeder-level load, mobile native apps.
+
+External endpoints used (no own backend)
+
+Purpose	Method + URL
+Geocoding	GET https://geocoding-api.open-meteo.com/v1/search
+Forecast	GET https://api.open-meteo.com/v1/forecast
+History	GET https://archive-api.open-meteo.com/v1/archive
+OSM data	POST https://overpass-api.de/api/interpreter
+Satellite search	POST https://planetarycomputer.microsoft.com/api/stac/v1/search
+Satellite signing	GET https://planetarycomputer.microsoft.com/api/sas/v1/token/{collection}
+LLM	Gemini API, function calling
+
+FIELD 5: Inputs and data sources
+
+Input channels
+
+Input	Type and constraints
+City search	string, 2-80 chars
+Ward GeoJSON URL	URL string; file must be a GeoJSON FeatureCollection of Polygon or MultiPolygon, max 15 MB, optional
+Demand file	CSV or XLSX, max 10 MB, optional but required for the Demand tab
+Population/age file	CSV or XLSX, max 10 MB, optional (N3)
+Scenario	enum live or stress_plus_2c, default live
+k	integer 1-20, default 5
+radius_km	decimal 0.5-5.0, default 1.5
+language	enum en_kn or en_hi, default en_kn
+weights	decimals w_hazard, w_exposure, w_vulnerability, each 0-1, normalised to sum 1 on use
+hazard thresholds	decimals hazard_low_c default 32, hazard_high_c default 46 (feels-like °C)
+selected day	date within the next 7 days; default is the hottest forecast day
+
+Demand file columns (user maps them in a column-mapping step):
+
+date: ISO YYYY-MM-DD or DD-MM-YYYY
+demand_mw: decimal, MW
+hour: integer 0-23, optional
+
+Environment variables: GEMINI_API_KEY (no default; absence activates Template mode).
+
+Core data schema (neutral types)
+
+Entity	Fields
+Ward	ward_id (string, required), name (string, 1-100), polygon (GeoJSON geometry), centroid_lat (decimal), centroid_lon (decimal), area_km2 (decimal), is_grid_cell (boolean)
+DayForecast	ward_id, date (ISO date), tmax_c (decimal), apparent_max_c (decimal), humidity_mean_pct (decimal 0-100)
+HourForecast	ward_id, datetime (ISO), apparent_c (decimal)
+Site	site_id (string osm_<type>_<id>), name (string or null), type (enum below), lat, lon
+WardFactors	ward_id, lst_c (decimal or null), lst_scene_date (date or null), ndvi (decimal -1..1 or null), green_cover_osm (decimal 0..1 or null), building_density_per_km2 (decimal or null), pop_density (decimal or null), vulnerable_share (decimal 0..1 or null)
+RiskResult	ward_id, hazard (0..1), exposure (0..1), vulnerability (0..1 or null), risk_score (0..100, 1 dp), risk_class (enum), exposure_basis (enum), top_factors (list of 3)
+DemandRecord	date, demand_mw, hour (integer or null)
+DemandModel	coefficients [a,b,c], train_days, test_days, r2_test, mape_test_pct, residual_std_mw
+TraceStep	step_no, kind (enum), tool (string or null), args (object), result_summary (string), started_at, duration_ms, status (enum)
+SourceStatus	source_id, name, status (enum), last_fetched (datetime or null), records (integer or null), detail (string), url
+Plan	defined in FIELD 7
+
+Enumerations
+
+Site.type: community_centre, school, library, hospital, townhall
+risk_class: low, moderate, high, severe
+exposure_basis: ndvi_and_buildings, osm_green_and_buildings, buildings_only, ndvi_only, none
+scenario: live, stress_plus_2c
+TraceStep.kind: plan, tool_call, verify, self_correction, report
+TraceStep.status: running, success, failed, skipped
+SourceStatus.status: live, failed, user_uploaded, not_loaded
+plan.status: draft, partial, failed (never "sent")
+plan.mode: llm, template
+
+Units and conventions: temperatures in °C; demand in MW; distances in km (haversine, straight-line); dates ISO YYYY-MM-DD; timezone Asia/Kolkata; coordinates WGS84 decimal degrees.
+
+Sample data policy: There is NO sample or mock data. Every figure comes from a live call to the sources above or from a file the user uploads. The only fixtures allowed are small synthetic inputs inside the unit-test folder for pure functions; production code must never import them. Satellite details: Landsat Collection 2 Level-2 surface-temperature band lwir11 converted using the scale and offset in the STAC raster metadata, then Kelvin to °C; Sentinel-2 L2A NDVI = (B08 − B04) / (B08 + B04) after applying each band's scale and offset from the STAC metadata. Pick the latest scene in the last 90 days with eo:cloud_cover below 20 for Sentinel-2 and below 40 for Landsat.
+
+FIELD 6: Processing rules and business logic
+
+Pipeline order: city → wards → sample points → forecast → site and ward factors → satellite (optional) → risk → demand → optimiser → agent plan → verifier → output.
+
+L1 Sample points: one per ward centroid. If more than 200 wards, use a 2 km sample grid for forecast calls only, and assign each ward the nearest sample point's forecast. Fetch forecast in chunks of 50 coordinates per request.
+
+L2 Scenario: if stress_plus_2c, add 2.0 to every tmax_c, apparent_max_c and apparent_c before any calculation. Store scenario in every result and in the plan.
+
+L3 City hazard: for the selected day, apparent_city = median of apparent_max_c across ward sample points. hazard_city = clamp((apparent_city − hazard_low_c) / (hazard_high_c − hazard_low_c), 0, 1).
+
+L4 Scaling: scaled(x) = (x − min) / (max − min) across wards. If max == min, every ward gets 0.5 and a note "no variation" is recorded.
+
+L5 Satellite hazard: if lst_c exists, lst_scaled = scaled(lst_c) across wards. Hazard per ward H = 0.5·hazard_city + 0.5·lst_scaled. If LST is missing, H = hazard_city for all wards and the UI shows the warning badge "Satellite layer unavailable, risk score uses weather and OSM only".
+
+L6 Exposure: build_scaled = scaled(building_density_per_km2); green = ndvi scaled 0-1 by scaled(ndvi), otherwise scaled(green_cover_osm). E = 0.5·build_scaled + 0.5·(1 − green_scaled). If one factor is missing, E uses the other alone and exposure_basis records which. If both are missing, E = null and the exposure weight is redistributed (L8).
+
+L7 Vulnerability: only if the optional file is loaded: V = 0.5·scaled(pop_density) + 0.5·scaled(vulnerable_share). Otherwise V = null, and the UI states "vulnerability omitted: no population file".
+
+L8 Risk score: risk_score = 100 · (w_h·H + w_e·E + w_v·V) / (sum of the weights whose factor is not null), rounded to 1 decimal. Defaults: w_hazard 0.4, w_exposure 0.4, w_vulnerability 0.2 (when V is null the remaining two renormalise to 0.5 each).
+
+L9 Risk class: severe ≥ 75, high ≥ 55 and < 75, moderate ≥ 35 and < 55, low < 35.
+
+L10 Demand model:
+
+Join the uploaded demand_mw with archive tmax_c by date. Require at least 90 matched days; otherwise error code DEMAND_TOO_FEW_DAYS.
+Chronological split: first 80% train, last 20% test.
+Fit demand = a + b·T + c·T² by ordinary least squares.
+Report r2_test and mape_test_pct on the test set.
+Forecast each of the next 7 days from forecast tmax_c, with interval = prediction ± 1.96 × residual_std_mw.
+Peak day = the forecast day with the highest predicted demand.
+
+L11 Stress window: from the peak day's HourForecast, find the hours where apparent_c ≥ day_max_apparent − 1.5; take the longest contiguous block as [start_hour, end_hour). Label: "temperature-driven stress window, not a measured demand peak". If the uploaded file has an hour column, instead use the hour-of-day mean demand over the 10% hottest historical days and take the top 3 contiguous hours.
+
+L12 Shift window: advise moving deferrable loads (washing, water pumping, ironing, EV charging) to the 3 hours starting 1 hour after end_hour. Never advise switching off cooling or medical equipment.
+
+L13 Optimiser (deterministic, in code, never the LLM):
+
+Demand points = ward centroids with risk_class of high or severe. Weight = risk_score.
+Greedy loop up to k times: pick the candidate site with the largest total weight of not-yet-covered points within radius_km (haversine). Ties are broken by the lower site_id in string order.
+Stop early if the best gain is 0.
+coverage_pct = covered_weight / total_weight × 100, 1 dp. If there are no high-risk points, return an empty selection and the message "No high or severe risk wards".
+
+L14 Warn-first list: top 5 wards by risk_score; tie-break by pop_density descending (if available), then name ascending.
+
+L15 Agent loop:
+
+The LLM may call only these tools: get_forecast, get_ward_risks, forecast_demand, find_candidate_sites, optimise_centres, draft_advisory.
+Maximum 12 model steps. Stop on a final report message or on reaching the cap (then plan.status = partial).
+Every tool argument is validated against its schema before execution; invalid arguments return an error to the model and count as a step.
+draft_advisory is deterministic: it fills an English template from structured plan fields. The LLM translates it into Kannada or Hindi and must keep every number in Latin digits.
+If a tool fails, the agent continues with the others and the plan's missing list names what is absent.
+
+L16 Verifier (code, runs after every drafted plan):
+
+V1: every ward_id and site_id referenced exists in tool outputs.
+V2: every number in the plan text (English and translated) equals a value from tool outputs after rounding to the displayed precision.
+V3: the plan states the scenario label when scenario is stress_plus_2c.
+V4: coverage_pct equals the optimiser output.
+On any failure, send the failed checks back to the agent for a correction, maximum 2 retries, each shown as a self_correction trace step. If still failing, set plan.status = partial and show the unresolved checks.
+
+L17 Template mode: if GEMINI_API_KEY is missing or the LLM errors twice, run the tools in fixed order (get_forecast, get_ward_risks, forecast_demand, find_candidate_sites, optimise_centres, draft_advisory), build the plan from their outputs, set plan.mode = template, and show the badge "Template mode (no LLM)". Translation is unavailable in this mode; show English only with the message "Translation needs the LLM".
+
+L18 Caching: forecast 30 min, OSM data 24 h, satellite scenes 6 h, in memory. The Retry button bypasses the cache.
+
+L19 State machine: idle → loading_data → ready → planning → verifying → plan_ready | plan_partial | error. "Run Planner" is enabled only in ready. Changing the scenario, k, radius, or weights returns the state to ready and marks the current plan stale.
+
+FIELD 7: Expected outputs and user experience
+
+Concept: a "city operations command center". Calm, serious, data-dense but uncluttered. No default purple gradients, no stock card grids.
+
+Visual style
+
+Dark default (background 
+#0B0F14, surface 
+#121821, border 
+#1F2937), with a light toggle.
+Risk colours only for risk meaning: low 
+#2DD4BF, moderate 
+#FBBF24, high 
+#F97316, severe 
+#DC2626. Interactive accent 
+#60A5FA.
+Never rely on colour alone: every risk chip carries a text label and icon.
+Fonts: Inter for UI, JetBrains Mono for numbers, timestamps and traces.
+8 px grid, 12 px radius cards, shadows only on floating elements, 150-250 ms transitions, respect prefers-reduced-motion.
+Outline icons. WCAG AA contrast, visible focus rings, aria-labels on map controls.
+Breakpoints: desktop ≥ 1024 px (split view), mobile < 1024 px (map on top, draggable bottom sheet with tabs).
+
+Layout, top to bottom
+
+Top bar: logo, city search, scenario segmented control (Live | +2 °C El Niño stress test), one data-health dot per source, theme toggle, Settings. When the stress test is on, tint the bar and show the ribbon "SIMULATED: live forecast + 2 °C".
+Hero strip: large "Run Planner" button with one line of description, plus 3 KPI tiles:
+Peak feels-like temperature on the selected day (°C, 1 dp)
+Wards at severe risk (count of total)
+Forecast peak-demand window or "Upload demand file" Each tile shows source and timestamp, and a skeleton loader while loading.
+Main split: map about 60% width, right panel about 40% with tabs Action Plan, Risk Ranking, Demand, Sources.
+Bottom: collapsible Agent Trace drawer.
+
+Map:
+
+Dark basemap (CARTO Dark Matter) in dark mode, Positron in light mode.
+Ward polygons filled by risk colour at 0.6 opacity; hover tooltip shows rank, score and top 3 factors as mini bars.
+Click opens a ward drawer: factor breakdown, 7-day heat-index sparkline, ward-specific actions.
+Site markers per type; selected centres pulse softly, with dashed radius circles and a floating chip "Coverage: X% of high-risk wards".
+Layer toggles: risk, heat index, greenery, building density, candidate sites, selected centres.
+With/without-plan toggle: highlights uncovered high-risk wards.
+
+Action Plan tab: three stacked cards with priority numbers.
+
+Warn first: ward chips, rank, score, class.
+Open cooling centres: site name, type, newly covered %, distance note "straight-line".
+Advise load shifting: stress window, shift window, predicted peak MW with interval.
+Footer note: "Candidate sites come from OpenStreetMap and are not verified as available or air-conditioned. Officer confirmation required."
+Language switch, Copy button, "Download as PDF".
+"Verified" badge whose popover lists V1-V4 results and any corrections. The badge reads "Partially verified" when status = partial.
+Every plan carries the label "DRAFT, requires officer approval. Nothing is sent."
+
+Risk Ranking tab: sortable table (rank, ward, score, class, 3 factor bars), rank-change arrows when scenario or weights change, weight sliders with live map update (debounced 300 ms).
+
+Demand tab: upload dropzone → column-mapping step → line chart of the 7-day forecast with shaded interval, highlighted peak window, backtest toggle (actual vs predicted on the test set), r2_test and mape_test_pct. Permanent note: "City/state level demand, not ward level."
+
+Sources tab: one card per source with name, status chip, last fetched, record count, scene date and cloud cover where relevant, Retry button, link to the official source, and (for buildings) the note "Building density: OSM count per km², approximate".
+
+Agent Trace: top stepper Plan > Fetch > Score > Forecast > Optimise > Verify > Report. Each step shows an icon, monospace arguments, spinner then ✓/✗, and duration in ms. Failed tool calls show amber with the reason and fallback. self_correction steps show a before/after diff.
+
+States:
+
+Every async region has a skeleton loader.
+Empty Demand tab: "Upload an official daily demand file (CSV/XLSX) to enable the forecast."
+Empty Action Plan: "Press Run Planner."
+Errors show as toast plus inline retry. Never a blank panel.
+
+Plan object shape (JSON)
+
+{
+  "plan_id": string, "generated_at": ISO datetime, "status": "draft|partial|failed",
+  "mode": "llm|template", "scenario": "live|stress_plus_2c", "day": ISO date,
+  "warn_first": [{"ward_id","name","rank","risk_score","risk_class"}],
+  "centres": [{"site_id","name","type","lat","lon","newly_covered_pct"}],
+  "coverage_pct": number, "uncovered_high_risk_ward_ids": [string],
+  "demand": {"peak_day","peak_mw","interval_mw":[low,high],"stress_window":{"start_hour","end_hour"},"shift_window":{"start_hour","end_hour"}} | null,
+  "advisories": {"en": string, "kn": string|null, "hi": string|null},
+  "missing": [string], "sources": [{"source_id","fetched_at"}],
+  "verification": {"passed": boolean, "checks":[{"id","passed","detail"}], "corrections": integer},
+  "sent": false
+}
+
+FIELD 8: Error handling and edge cases
+
+ID	Case	Response	User sees
+E1	City search returns 0 results	No state change	"No city found. Check spelling." under the search box
+E2	Forecast API timeout or 5xx	Retry twice with backoff (1 s, 3 s), then mark failed	Sources card "Failed", banner "Data unavailable: Open-Meteo forecast", Run Planner disabled
+E3	Forecast API 429	Back off 10 s, retry once	"Rate limited, retrying…"
+E4	Overpass timeout or empty result	Retry once, then mark failed. Zero sites is a valid result	"Data unavailable: OpenStreetMap sites" or "No candidate sites in this area"
+E5	Ward GeoJSON URL unreachable, wrong type, or > 15 MB	Fall back to grid cells	Toast with reason plus label "grid cells, not wards"
+E6	Satellite search finds no scene or raster read fails	Continue without satellite layer	Warning badge "Satellite layer unavailable, risk score uses weather and OSM only"
+E7	Demand file wrong type, empty, or > 10 MB	Reject file	"Please upload a CSV or XLSX under 10 MB."
+E8	Demand file columns unmappable or non-numeric values	Show mapping step; rows with bad values skipped and counted	"N rows skipped (invalid date or demand)"
+E9	Fewer than 90 matched days	Do not fit the model	DEMAND_TOO_FEW_DAYS: "Need at least 90 days of data; found N."
+E10	Gemini key missing	Template mode	Badge "Template mode (no LLM)"
+E11	Gemini error, rate limit, or malformed tool call	Retry once, then Template mode	Trace shows the failure, then fallback
+E12	Agent hits 12 steps	Stop	plan.status = partial, banner "Plan incomplete: step limit reached"
+E13	Verifier fails after 2 retries	Show the plan as partial	"Partially verified" badge with unresolved checks
+E14	No high or severe wards	Optimiser returns empty selection	"No high or severe risk wards for this day"
+E15	Zero variation across wards	Scaled values 0.5	Note "No variation in this factor"
+E16	Browser offline	All fetches fail fast	Banner "You are offline" and all sources show Failed
+E17	User changes scenario, weights, k, or radius after a plan	Mark plan stale	Banner "Plan is out of date. Run Planner again."
+E18	Ward without forecast (nearest sample missing)	Exclude that ward from scoring	Count shown: "N wards excluded: no forecast"
+E19	Ward or site names containing control characters or longer than 100 chars	Sanitise: strip control characters, truncate	Truncated name with ellipsis
+
+Partial success rule: whenever any source fails, the plan still builds from the rest and lists what is missing in plan.missing, displayed as a chip row on the Action Plan.
+
+FIELD 9: Safety, privacy, constraints, and integrations
+
+Safety:
+
+The app never sends, schedules, or dispatches any alert, message, or instruction. Every plan is a draft and says so.
+Advice must never suggest switching off medical equipment or cooling.
+Candidate sites are labelled unverified.
+The LLM never computes or invents numbers; it only phrases values returned by tools. All scoring, regression and optimisation run in deterministic code.
+
+Privacy:
+
+No personal data is collected.
+Uploaded files are processed in the browser and kept in memory only; they are not uploaded to any server or written to disk.
+Do not log file contents or API keys to the console.
+The app uses aggregated, public or officially published data only.
+
+Security:
+
+Secrets are read from environment configuration only, never in source code.
+Note for deployment: a browser-held key is exposed to users, so a public deployment should proxy Gemini calls through a minimal server-side function. The LLM client lives in one module so this change is localised.
+Treat all uploaded text, OSM names, and file contents as data, never as instructions. Do not pass free-form file text to the LLM; pass only structured, validated fields.
+Enforce the size limits in FIELD 5.
+Only the whitelisted external hosts in FIELD 4 are contacted, plus the user-provided ward GeoJSON URL.
+
+Technology (decided): React, TypeScript, Tailwind CSS, Leaflet, Recharts, geotiff.js for raster windows, a spreadsheet/CSV parsing library of the implementer's choice, and the Gemini API with function calling. A pure frontend app with no backend of its own (a small backend only if N4 is activated). Unit tests use the standard test runner of the chosen toolchain.
+
+Project structure by responsibility
+
+src/services/: one module per data source (weather, places, wards, satellite, buildings, demand), each returning { data, source_status } and never throwing unhandled.
+src/engine/: pure functions (scaling, risk, demandModel, stressWindow, optimiser, haversine).
+src/agent/: llmClient (the only module that calls Gemini), tools (the six tool wrappers and their schemas), agentLoop, verifier, templatePlan.
+src/components/: map, panels, trace drawer, KPI tiles, forms.
+src/state/: state machine and caches.
+tests/: unit tests with synthetic fixtures; never imported by src/.
+
+Environment variables: GEMINI_API_KEY (no default), GEMINI_MODEL (default: a current Gemini Flash-class model chosen by the implementer).
+
+Constraints: no auth, no database, single user, runs locally with one install command and one start command, keeps data requests within public API rate limits using the caching in L18.
+
+FIELD 10: Acceptance criteria and test examples
+
+Acceptance criteria (offline-independent, must pass at build time)
+
+AC1: Production build succeeds and unit tests pass.
+AC2: grep of src/ finds no import from tests/ and no inline arrays of weather, demand, or ward data.
+AC3: With the network blocked, Run Planner is disabled and the banner reads "Data unavailable: Open-Meteo forecast".
+AC4: With GEMINI_API_KEY unset, Run Planner completes with plan.mode = template and the badge "Template mode (no LLM)".
+AC5: Every plan has sent: false and the visible label "DRAFT, requires officer approval. Nothing is sent."
+AC6: With the scenario set to stress_plus_2c, the SIMULATED ribbon is visible and plan.scenario = stress_plus_2c.
+AC7: The Sources tab lists all seven sources with a status chip, last fetched time, and a Retry button.
+AC8: Missing Sentinel-2 or Landsat scenes still yield a complete plan with the satellite warning badge.
+AC9: The agent trace contains one entry per tool call with arguments, duration, and status.
+AC10: Uploading a demand file with fewer than 90 matched days shows "Need at least 90 days of data; found N."
+
+Acceptance criteria (live, checked manually with real data)
+
+AC11: With internet access and a real ward GeoJSON, Run Planner for Bengaluru completes and shows ranked wards, ≤ k selected sites, and a plan with a "Verified" badge.
+AC12: Every number on the Action Plan has a source badge with a fetch date.
+AC13: Changing a weight slider reorders the ranking and recolours the map within 1 second.
+AC14: Uploading a real Grid-India or SLDC daily-demand file shows r2_test, mape_test_pct, and the backtest chart.
+
+Named unit tests (synthetic fixtures, tests folder only)
+
+T1 scaled([10,20,30]) → [0, 0.5, 1]; scaled([5,5,5]) → [0.5, 0.5, 0.5].
+T2 risk_score with H=1, E=1, V=1, weights 0.4/0.4/0.2 → 100.0; with H=0.5, E=0.5, V=null, weights 0.4/0.4/0.2 → 50.0.
+T3 risk_class(75) = severe; (74.9) = high; (55) = high; (35) = moderate; (34.9) = low.
+T4 hazard_city: apparent 38.0, thresholds 32/46, scenario live → 0.4286 (4 dp); with stress_plus_2c → 0.5714.
+T5 optimiser: points A (12.9700, 77.5900, weight 3), B (12.9700, 77.6000, weight 2), C (13.1000, 77.7000, weight 5); sites S1 (12.9700, 77.5950), S2 (13.1000, 77.7000); radius 1.5. For k=1 the result is [S1] (tie broken by lower id) with coverage_pct = 50.0; for k=2 the result is [S1, S2] with coverage_pct = 100.0.
+T6 demand fit: 21 points of y = 1000 + 50T + 2T² for T = 20..40 → coefficients recovered within 1e-6, r2 = 1.0. 89 matched days → error DEMAND_TOO_FEW_DAYS.
+T7 stress window: hourly apparent values 30.0 for all hours except hour 14 = 40.0, hour 15 = 39.5, hour 16 = 38.4 → threshold 38.5 → window [14, 16).
+T8 verifier: a plan text containing "41.3" absent from tool outputs → V2 fails; the same plan with the value corrected → passes.
+T9 safety: every plan object has sent === false.
+
+Scenarios (Given / When / Then)
+
+Happy path: Given live APIs and a ward GeoJSON, when the user presses Run Planner, then the trace shows the six tools in order, the verifier passes, and the plan is shown with status draft.
+Nothing found: Given all wards score below 55, when the planner runs, then the optimiser returns an empty selection and the plan shows "No high or severe risk wards for this day".
+Source down: Given Overpass is unreachable, when the planner runs, then the plan is partial, missing contains "candidate sites", and the Sources tab shows OpenStreetMap as Failed.
+Self-correction: Given the LLM writes a number that is not in tool outputs, when the verifier runs, then a self_correction step appears and the final plan passes V1-V4 or is marked partial after 2 retries.
+Stress test: Given the scenario is switched to stress_plus_2c after a live plan exists, then the plan is marked stale, the ribbon appears, and the next run shows higher hazard values than the live run.
+
+After the build: check AC1-AC10 and T1-T9 first, then do AC11-AC14 with real data and your own files.
